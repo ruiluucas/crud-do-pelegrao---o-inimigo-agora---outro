@@ -1,1 +1,1 @@
-tem que dar um composer install
+tem que dar um composer install dentro do src
