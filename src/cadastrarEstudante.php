@@ -2,6 +2,8 @@
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   require_once('./app/models/estudanteModel.php');
 
+  session_start();
+
   $nome = $_POST['nome'];
   $rg = $_POST['rg'];
   $cpf = $_POST['cpf'];
@@ -21,6 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nomePai,
     $nomeMae,
   );
+
+  $_SESSION['id'] = $id;
 
   header('Location: index.php');
   exit;

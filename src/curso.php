@@ -2,9 +2,14 @@
 require_once('./app/models/cursoModel.php');
 require_once('./app/models/estudanteModel.php');
 
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    header('Location: index.php');
-    exit;
+use \MongoDB\BSON\ObjectId;
+
+session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $cursoModel = new CursoModel();
+    $cursoModel->subscribeCurso($_GET['id'], $_SESSION['id']);
 }
 
 $curso_id = $_GET['id'];
@@ -13,12 +18,7 @@ $cursoModel = new CursoModel();
 $estudanteModel = new EstudanteModel();
 
 $curso = $cursoModel->getCursoById($curso_id);
-$estudantes = $estudanteModel->getEstudantesByCursoId($curso_id);
-
-if (!$curso) {
-    echo "Curso não encontrado.";
-    exit;
-}
+$estudantes = json_decode($estudanteModel->getEstudantesByCursoId($curso_id));
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -41,7 +41,39 @@ if (!$curso) {
                 <h1 class="text-3xl font-bold text-gray-800 mb-2">
                     <?php echo htmlspecialchars($curso['nome']); ?>
                 </h1>
-                <button class="bg-blue-500 text-white font-bold p-2 px-4 rounded-md">Entrar</button>
+                <form method="post">
+                    <?php
+                    $usuarioLogado = false;
+                    $usuarioJaNosCurso = false;
+                    if (!empty($_SESSION['id'])) {
+                        $usuarioLogado = true;
+                    }
+
+                    if ($usuarioLogado) {
+
+                        if (!empty($estudantes) && is_array($estudantes)) {
+                            foreach ($estudantes as $estudante) {
+                                $estudanteId = $estudante->_id->{'$oid'};
+                                $sessionId = json_decode(json_encode($_SESSION['id']))->{'$oid'};
+
+                                if ($estudanteId === $sessionId) {
+                                    $usuarioJaNosCurso = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    ?>
+                    <?php if (!$usuarioLogado): ?>
+                        <a href="/cadastrarEstudante.php" class="underline text-green-600 font-bold p-2 px-4">Clique aqui e inscreva-se para entrar no curso</a>
+                    <?php endif; ?>
+
+                    <?php if ($usuarioJaNosCurso && $usuarioLogado): ?>
+                        <span class="text-green-600 font-bold p-2 px-4">✓ Você já está no curso</span>
+                    <?php elseif (!$usuarioJaNosCurso && $usuarioLogado): ?>
+                        <button type="submit" class="bg-blue-500 text-white font-bold p-2 px-4 rounded-md">Entrar</button>
+                    <?php endif; ?>
+                </form>
             </div>
             <p class="text-lg text-gray-600 mb-4">
                 <?php echo htmlspecialchars($curso['descricao']); ?>
@@ -77,7 +109,7 @@ if (!$curso) {
                         <li class="flex items-center bg-gray-50 p-3 rounded-lg shadow-sm">
                             <div class="ml-3">
                                 <p class="text-md font-medium text-gray-900">
-                                    <?php echo htmlspecialchars($estudante['nome']); ?>
+                                    <?php echo ($estudante->nome); ?>
                                 </p>
                             </div>
                         </li>

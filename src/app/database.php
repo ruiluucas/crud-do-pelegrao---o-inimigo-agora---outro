@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use MongoDB\Client;
+use MongoDB\BSON\ObjectId;
 
 class Database
 {
@@ -13,11 +14,7 @@ class Database
     private function getClient()
     {
         if (empty($this->clientInstance)) {
-            try {
-                $this->clientInstance = new Client("mongodb://admin:admin@mongo:27017");
-            } catch (Exception $e) {
-                die("Erro ao conectar ao MongoDB: " . $e->getMessage());
-            }
+            $this->clientInstance = new Client("mongodb://admin:admin@mongo:27017");
         }
         return $this->clientInstance;
     }
@@ -30,66 +27,52 @@ class Database
         return $this->dbInstance;
     }
 
-    public function selectCollection(string $collectionName)
+    protected function selectCollection(string $collectionName)
     {
         return $this->getDatabase()->getCollection($collectionName);
     }
 
+    protected function toObjectId($id)
+    {
+        $objectId = new ObjectId($id);
+        return $objectId;
+    }
+
     protected function insert(string $collectionName, $document)
     {
-        try {
-            $collection = $this->selectCollection($collectionName);
+        $collection = $this->selectCollection($collectionName);
 
-            $result = $collection->insertOne($document);
+        $result = $collection->insertOne($document);
 
-            return $result->getInsertedId();
-        } catch (Exception $e) {
-            echo "Erro ao inserir: " . $e->getMessage();
-            return null;
-        }
+        return $result->getInsertedId();
     }
 
     protected function find(string $collectionName, array $filter = [], array $options = [])
     {
-        try {
-            $db = $this->getDatabase();
-            $collection = $db->selectCollection($collectionName);
+        $db = $this->getDatabase();
+        $collection = $db->selectCollection($collectionName);
 
-            $cursor = $collection->find($filter, $options);
+        $cursor = $collection->find($filter, $options);
 
-            return $cursor->toArray();
-        } catch (Exception $e) {
-            echo "Erro ao buscar: " . $e->getMessage();
-            return [];
-        }
+        return $cursor->toArray();
     }
 
     protected function findOne(string $collectionName, array $filter = [], array $options = [])
     {
-        try {
-            $db = $this->getDatabase();
-            $collection = $db->selectCollection($collectionName);
+        $db = $this->getDatabase();
+        $collection = $db->selectCollection($collectionName);
 
-            return $collection->findOne($filter, $options);
-        } catch (Exception $e) {
-            echo "Erro ao buscar um: " . $e->getMessage();
-            return null;
-        }
+        return $collection->findOne($filter, $options);
     }
 
     protected function update(string $collectionName, array $filter, array $update)
     {
-        try {
-            $db = $this->getDatabase();
-            $collection = $db->selectCollection($collectionName);
+        $db = $this->getDatabase();
+        $collection = $db->selectCollection($collectionName);
 
-            $result = $collection->updateMany($filter, $update);
+        $result = $collection->updateMany($filter, $update);
 
-            return $result->getModifiedCount();
-        } catch (Exception $e) {
-            echo "Erro ao atualizar: " . $e->getMessage();
-            return 0;
-        }
+        return $result->getModifiedCount();
     }
 
     protected function delete(string $collectionName, array $filter)
@@ -99,16 +82,11 @@ class Database
             return 0;
         }
 
-        try {
-            $db = $this->getDatabase();
-            $collection = $db->selectCollection($collectionName);
+        $db = $this->getDatabase();
+        $collection = $db->selectCollection($collectionName);
 
-            $result = $collection->deleteMany($filter);
+        $result = $collection->deleteMany($filter);
 
-            return $result->getDeletedCount();
-        } catch (Exception $e) {
-            echo "Erro ao deletar: " . $e->getMessage();
-            return 0;
-        }
+        return $result->getDeletedCount();
     }
 }

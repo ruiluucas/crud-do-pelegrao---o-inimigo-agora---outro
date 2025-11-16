@@ -20,7 +20,17 @@ class EstudanteModel extends Database
 
     public function getEstudantesByCursoId($cursoId)
     {
-        return;
+        $pipeline = [
+            ['$match' => ['_id' => $this->toObjectId($cursoId)]],
+            ['$lookup' => [
+                'from' => 'estudantes',
+                'localField' => 'estudantes_id',
+                'foreignField' => '_id',
+                'as' => 'estudantes'
+            ]]
+        ];
+        $cursosComDetalhes = $this->selectCollection("cursos")->aggregate($pipeline);
+        return json_encode($cursosComDetalhes->toArray()[0]['estudantes']);
     }
 
     public function getAllEstudantes()
@@ -28,9 +38,9 @@ class EstudanteModel extends Database
         return $this->find($this->collectionName);
     }
 
-    public function getEstudanteById($id)
+    public function getEstudanteById($estudanteId)
     {
-        return $this->findOne($this->collectionName);
+        return $this->findOne($this->collectionName, ['_id' => $this->toObjectId($estudanteId)]);
     }
 
     public function updateEstudante($id, $email = null, $senha = null)
@@ -38,8 +48,8 @@ class EstudanteModel extends Database
         return;
     }
 
-    public function deleteEstudante($id)
+    public function deleteEstudante($estudanteId)
     {
-        return $this->delete($this->collectionName, ['_id' => $id]);
+        return $this->delete($this->collectionName, ['_id' => $this->toObjectId($estudanteId)]);
     }
 }

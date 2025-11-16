@@ -16,14 +16,25 @@ class CursoModel extends Database
         ]);
     }
 
+    public function subscribeCurso($cursoId, $estudanteId)
+    {
+        return $this->update(
+            $this->collectionName,
+            ['_id' => $this->toObjectId($cursoId)],
+            ['$addToSet' => [
+                'estudantes_id' => $estudanteId
+            ]]
+        );
+    }
+
     public function getAllCursos()
     {
         return $this->find($this->collectionName);
     }
 
-    public function getCursoById($id)
+    public function getCursoById($cursoId)
     {
-        return $this->findOne($this->collectionName);
+        return $this->findOne($this->collectionName, ['_id' => $this->toObjectId($cursoId)]);
     }
 
     public function updateCurso($id, $email = null, $senha = null)
@@ -31,8 +42,8 @@ class CursoModel extends Database
         return;
     }
 
-    public function deleteCurso($id)
+    public function deleteCurso($cursoId)
     {
-        return $this->delete($this->collectionName, ['_id' => $id]);
+        return $this->delete($this->collectionName, ['_id' => $this->toObjectId($cursoId)]);
     }
 }
